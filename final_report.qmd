@@ -1,18 +1,21 @@
 ---
-title: "Final Report"
+title: "The Analysis of Medical Trends in Oropharyngeal Cancer"
 date: today
 format: 
     pdf:
-        documentclass: article
+        documentclass: report
         mainfont: Times
         toc: true
         fontsize: 12px
-        cite-method: biblatex
         keep-tex: true
         highlight-style: github
+        code-fold: true
+        code-tools: true
+        fig-pos: "H"
 execute:
     echo: true
-jupyter: python3               
+jupyter: python3
+bibliography: citations.bib                
 ---
 <br>
 
@@ -27,12 +30,11 @@ jupyter: python3
 
 ## Introduction
 
-According to the American Cancer Society, *“Oropharyngeal cancer is a relatively rare cancer about 53,000 people in the United States develop this cancer each year.”* ***(Cleveland Clinic)*** 
+According to the American Cancer Society, *“Oropharyngeal cancer is a relatively rare cancer about 53,000 people in the United States develop this cancer each year.”* ***[@noauthor_oropharyngeal_nodate]***
 
-The oropharynx is in the midsection of the throat and along with the nasopharynx and hypopharynx they make up the pharynx section of the throat. 
+The oropharynx is in the midsection of the throat and along with the nasopharynx and hypopharynx they make up the pharynx section of the throat.  
 
-According to the National Cancer Institute 
-(NCI), the most common risk factors for developing this type of cancer is smoking cigarettes for more than 10 packs a year, being infected with HPV especially HPV-16, and a personal history of head and neck cancer. ***(National Cancer Institute)***
+According to the National Cancer Institute (NCI), the most common risk factors for developing this type of cancer is smoking cigarettes for more than 10 packs a year, being infected with HPV especially HPV-16, and a personal history of head and neck cancer. ***[@noauthor_oropharyngeal_2023]***
 
 ## Questions of Interest
 
@@ -44,7 +46,7 @@ Some questions that interested the team as a whole were as follows.
 * Is there a relationship between ECOG PS and the stage of the cancer? How is this influenced by the presence of HPV cells and the size of the tumor?
 * What treatment is most commonly used for smokers? Is this treatment more successful if a patient does not currently smoke? Are patients who do smoke more likely to relapse?
 * Is there a higher chance of relapse if chemo is used in the treatment?
-* If a person was diagnosed prior to 2005, did they relapse/have cancer spread more than those who were diagnosed after 2005?
+* If a person was diagnosed prior to 2005, did they relapse/have cancer spread more than those who were diagnosed after 2005? ***[@noauthor_recurrent_2016]***
 
 Once the question list was identified, it was broken down into two different visualization sections, one done by Python and one done by Tableau.
 <br>  
@@ -56,13 +58,15 @@ We will start importing some libraries such as pandas and matplotlib for data vi
 ```{python}
 import pandas as pd
 import matplotlib.pyplot as plt
+import textwrap
+import plotly.graph_objects as go
 ```
 
 
 ## About the Dataset: 
 
 
-The dataset chosen for this project comes from the Cancer Imaging Archives website. The dataset is comprised of clinically collected radiation therapy treatment results. It is comprised of 3,346 patients and used 3 different CT scan brand manufacturers to conduct the imaging for these tests. The median patient age for the study is 63 years and is comprised of 80% males and 20% females. 
+The dataset chosen for this project comes from the Cancer Imaging Archives website. The dataset is comprised of clinically collected radiation therapy treatment results. It is comprised of 3,346 patients and used 3 different CT scan brand manufacturers to conduct the imaging for these tests. The median patient age for the study is 63 years and is comprised of 80% males and 20% females. ***[@welch_computed_2023]***
 
 Some possible sources of bias found while cleaning the data set was due to the large population of men in the data set. The conclusions that could be drawn may or may not apply to women, as medical treatments affect genders differently. As such, the conclusions drawn have been from the perspective of males. Another source of bias found is the field for how many packs smoked per year was a best guess field, which a person may or may not have been truthful when answering.
 
@@ -81,7 +85,7 @@ Now we are importing the dataset from our local machine.
 ```{python}
 path = '/data/data.xlsx'
 
-df = pd.read_excel(path)
+df = pd.read_excel('./data/data.xlsx')
 df.head()
 ```
 
@@ -186,20 +190,252 @@ df['2nd_cancer_site'].fillna('No', inplace = True)
 df.isnull().sum()
 ```
 
-We have around3346 rows, and in few columns more than 80% of the data is empty.
+We have around 3346 rows, and in few columns more than 80% of the data is empty.
 
 Hence, we choose to drop those columns in order to further clean the dataset.
 
 ```{python}
-df.drop(columns = ['Date Local', 'Date Regional', 'Distant', 'Date Distant', 'Date 2nd Ca', 'Chemo? ', 'RADCURE-challenge'])
+df.drop(columns = ['Date Local', 'Date Regional', 'Distant', 'Date Distant', 'Date 2nd Ca', 'RADCURE-challenge'])
 
 ```
-## Citation:
+## Data Visualization & Analysis:
+
+<hr/>
+<br/>
+
+#### Figure 1:
+
+The first thing we wanted to look at was if there was a primary cancer 
+site that is more common in smokers than non-smokers.
+
+```{python}
+smoking_df = df.groupby('cancer_site').smoking_status.value_counts().unstack()
+smokingSite =smoking_df.plot(kind='barh',
+        stacked=True,
+        title='Diagnosis site by smoking status',
+        ylabel = "Cancer Site",
+        xlabel = "Count");
+
+smokingSite.legend(['Current', 'Ex-Smoker','Non-Smoker', 'Unknown'], title = 'Smoking Status');
+```
+In Figure 1 we can see that the most common cancer sites for smokers and ex-smokers are the Oropharynx and the Larynx, while the Nasopharynx is more common in patients who do not smoke.
+
+Then we looked at how likely HPV cells were present in the cancer based on the location site of the cancer.
+
+#### Figure 2:
+
+```{python}
+hpv_df = df.groupby('HPV').cancer_site.value_counts().unstack()
+hpvSite = hpv_df.plot(kind='barh', stacked=True, title='HPV status by diagnosis site')
+hpvSite.legend(loc = 'upper left', bbox_to_anchor=(1.0, 1.0))
+plt.yticks([0, 1, 2], ['Not Tested', 'Negative', 'Positive']);
+```
+
+We also wanted to look at the distribution of treatment types among the patients.
+
+#### Figure 3:
+
+```{python}
+# Look at the treatment type column in the date frame
+combined_treatment_type_counts = df['treatment_type'].value_counts()
+
+#Assign colors to each treatment type
+adjusted_color_palette = ["#00008B", "#FF4500", "#32CD32", "#FF69B4"]  # Corrected color codes
+#Assign descriptions to each treatment type
+descriptions = {
+    "RT alone": "This represents cases where only Radiation Therapy is used as the treatment method.",
+    "ChemoRT": "This represents cases where a combination of Chemotherapy and Radiation Therapy is used for treatment.",  # Corrected key and description
+    "RT + EGFRI": "This represents cases where Radiation Therapy is combined with Epidermal Growth Factor Receptor Inhibitor for treatment.",
+    "Postop RT alone": "This represents cases where only Postoperative Radiation Therapy is used, typically after a surgical procedure."
+}
+#Calculate percentage of each treatment type and provide descriptions for each treatment type
+labels_with_descriptions = []
+for label, count in zip(combined_treatment_type_counts.index, combined_treatment_type_counts):
+    pct = 100 * count / combined_treatment_type_counts.sum()  # Percentage
+    description = descriptions.get(label, '')  # Matching with description keys
+    indented_description = '\n    '.join(textwrap.wrap(description, width=30))
+    labels_with_descriptions.append(f"{label} ({pct:.1f}%)\n    {indented_description}.")
+```
+
+```{python}
+#Create the plot for each treatment type
+plt.figure(figsize=(10, 10))
+plt.pie(combined_treatment_type_counts, textprops=dict(color="w"), startangle=140, colors=adjusted_color_palette, wedgeprops=dict(width=0.4))
+plt.gca().add_artist(plt.Circle((0, 0), 0.70, fc='white'))
+plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0), labels=labels_with_descriptions)
+plt.title('Distribution of Treatment Types')
+plt.axis('equal')
+plt.show()
+```
+Figure 3 shows that the majority of treaments use only radiation therapy (55.5%). However, there is also a large number of patients who receive chemotherapy along with the radiation therapy (42.2%).
+
+We then took this a step further and looked at how often each treatment type is used based on the site of the cancer.  
+
+#### Figure 4:
+
+```{python}
+#Set up
+df['treatment_type'] = df['treatment_type'].str.rstrip()
+ct = pd.crosstab(df['cancer_site'], df['treatment_type'])
+ct_filtered = ct[ct.sum(axis=1) >= 100]
+ct_filtered = ct_filtered.drop(index='Unknown', errors='ignore')
+ct_filtered.loc['Total'] = ct_filtered.sum(axis=0)
+ct_normalized_filtered = ct_filtered.div(ct_filtered.sum(axis=1), axis=0) * 100
+ct_normalized_filtered
+```
+
+```{python}
+# colors
+colors_dict = {
+    'RT alone': 'black',
+    'RT + EGFR': 'red',
+    'RT + ICI': 'purple',
+    'RT + Other': 'yellow',
+}
+
+# Create figure
+fig = go.Figure()
+
+fig = go.Figure()
+
+for treatment_type, color in zip(ct_normalized_filtered.columns, colors_dict.values()):
+    fig.add_trace(go.Bar(
+        y=[f"{index} (Patients: {ct_filtered.loc[index].sum()})" for index in ct_normalized_filtered.index],
+        x=ct_normalized_filtered[treatment_type],
+        name=treatment_type,
+        orientation='h',
+        marker_color=color
+    ))
+
+fig.update_layout(
+    barmode='stack',
+    title_text='How Different Treatments Are Used for Each Cancer Type (Minimum of 100 patients)',
+    title_font_size=14,
+    xaxis_title_text='Percentage (%)',
+    xaxis_title_font_size=12,
+    yaxis_title_text='Cancer Site',
+    yaxis_title_font_size=12,
+    font_size=10,
+    legend_title_text='Treatment Type',
+    legend_title_font_size=10,
+    legend_font_size=8,
+)
+
+fig.show()
+```
+
+Figure 4 shows that over half the patients with cancer in the oropharynx are treated with both radiation therapy and chemotherapy, but there is also a large amount of patients with cancer in the oropharynx who receive only radiation therapy. However, in the larynx the majority of patients receive only radiation therapy.
+
+Next we looked at the success rate of the treatment indicated by a relapse. There are two kinds of relapse that a patient can have: local and regional. A local relapse occurs when the patient has cancer in the same site as the first time they had cancer. A regional relapse occurs when the patient develops cancer in areas around the original cancer site. We decided to look into if relapse was common among patients with or without HPV for both local and regional relapse.
+
+#### Figure 5:
+
+```{python}
+# Focus only on HPV testing and local relapse
+alive = ['Alive', 'alive']
+mask = df['Status'].isin(alive)
+alive_patients = df[mask]
+```
+
+```{python}
+# Focus only on treatment type and local relapse
+local = alive_patients.groupby('Local').treatment_type.value_counts().unstack()
+#fill null values with 0
+local = local.fillna(0)
+local = local.transpose()
+```
+
+```{python}
+local = pd.DataFrame(local)
+local = (local/2287)*100
+```
+
+```{python}
+# Create the bar graph
+local_relapse = local.plot(kind = 'barh',
+                           stacked = True,
+                           width = 0.75,
+                           xlabel = 'Percentage %',
+                           ylabel = 'Treatment Type',
+                           title = 'Treatment type with Local Relapse')
+local_relapse.legend(['No', 'Persistent','Possible', 'Yes'], title = 'Relapse');
+```
+
+In Figure 5, we can see that relapse was most common among patients who were only treated with radiotherapy. However, overall local relapse did not occur the majority of the time.
+
+#### Figure 6:
+
+```{python}
+# Percentages of patients who had the cancer return Regionally
+regional = alive_patients.groupby('Regional').treatment_type.value_counts().unstack()
+# Fill null values with 0
+regional = regional.fillna(0)
+regional = regional.transpose()
+```
+
+```{python}
+# Finds the percentage of regional relapse
+regional = pd.DataFrame(regional)
+regional = (regional/2287)*100
+```
+
+```{python}
+reg_relapse = regional.plot(kind = 'barh',
+                           stacked = True,
+                           width = 0.75,
+                           xlabel = 'Percentage %',
+                            ylabel = 'Treatment Type',
+                            title = 'Presence of HPV with Regional Relapse')
+reg_relapse.legend(['No', 'Persistent','Possible', 'Yes'], title = 'Relapse')
+```
+
+Figure 6 shows that regional relapse is not very common with any of the treatment types. Compared to Figure 5, we can observe that regional relapse is less common than local relapse.
 
 
-* Professional, Cleveland Clinic medical. *“Oropharyngeal Cancer: Symptoms, Stages & 
-Prognosis.”* Cleveland Clinic, my.clevelandclinic.org/health/diseases/12180-
-oropharyngeal-cancer. ***Accessed 24 Sept. 2023***
+#### Tableau Visualization:
 
-* *“Oropharyngeal Cancer Treatment.”* National Cancer Institute. *"www.cancer.gov/types/head-and-
-neck/patient/adult/oropharyngeal-treatment-pdq#:~:text=Oropharyngeal%20cancer%20is%20a%20disease,neck%20and%20a%20sore%20throat."* ***Accessed 24 Sept. 2023.*** 
+##### Figure 1:
+
+In the first visualization we analyze the status of the patients who went through Chemotherapy and if they are alive or have passed away.
+
+We also assess how many people went through chemotherapy as it is a rather dificult decision to make.
+
+![Chemotherapy vs Status](./images/chemo.jpeg)
+
+
+
+##### Figure 2:
+
+In Figure 2 we analyze the last follow up date of patients who engaged in smoking.
+
+![Smoking Status vs Last Follow Up Date](./images/smoking-follow.jpeg)
+
+
+##### Figure 3:
+
+Figure 3 shows a heatmap and the relation between age of the patients, diagnosis type, the dosage they are administered on, and the cancer substitute.
+
+![Heatmap of Diagnosis Type and Dosage](./images/diagnosis.jpeg)
+
+##### Figure 4:
+
+In Figure 4 we analyze what sort of treatments did the patient receive and their smoking status. We visualize this data in a tabular format.
+
+![Treatment Type vs Smoking Status](./images/smoking-treatment.png)
+
+
+## Conclusion & Bias:
+
+Since the patient data was 80% male, the conclusions we have gained from the analysis of the dataset will mostly apply to men. However, according to the American Cancer Society, oropharyngeal cancer is twice as likely to occur in men than in women (“Risk Factors for Oral Cavity and Oropharyngeal Cancers”). It is possible that this is due to men historically being more likely to use tobacco products ***[@noauthor_risk_nodate]***.  
+
+The second Tableau visualization shows that among the female patients, more of them were non-smokers and ex-smokers than current smokers, while the men had more current smokers and ex-smokers than non-smokers. Oral HPV is also most common in men, as 10% of men are exposed to it during their life, while  only 3.6% of women are exposed to it during their lifetime ***[@noauthor_hpv_2023]***. While the conclusions we draw have a bias towards men because our patient sample is mostly male, this is understandable due to Oropharyngeal cancer being more common in men than women. 
+
+From the above analysis, we can conclude that the most common site for Oropharyngeal cancer is the oropharynx (python Figure 1). This is particularly common for patients who are current smokers or ex-smokers (python Figure 1). This was also a very common site for patients who tested for HPV (python Figure 2). It did not matter if the test result was positive or negative, the oropharynx was the dominant cancer site for both results. HPV affects the throat and mouth, and is the cause of up to 70% of Oropharyngeal cancer cases ***[@noauthor_hpv_2023]***, so it is not surprising that patients with cancer in the oropharynx would be tested for HPV. Further analysis could be done for patients with cancer in the oropharynx to compare HPV status and their smoking status. The larynx was the second most common site for Oropharyngeal cancer (python Figure 1). This was also a common site for patients who have smoked in their life (python Figure 1) and it was the most common site for patients not tested for HPV (python Figure 2), indicating that this cancer site is most likely to occur because of smoking status. The third most common site was the nasopharynx, which was more common among patients who have never smoked (python Figure 1). This was also not a very common site for patients with HPV (python Figure 2). Since this site was common among patients who did not smoke and did not have HPV, the cause of the cancer here could be genetic. The common causes of Oropharyngeal cancer have influence over the cancer site. 
+
+The distribution of treatment types revealed that radiotherapy and chemo-radiotherapy were the two most utilized treatment types for Oropharyngeal cancer, with radiation therapy alone being the most common treatment type (python Figure 3). Two of the three most common cancer sites had a more common treatment type. The Larynx, which was common among smokers, was mostly treated with only radiotherapy, while the Nasopharynx, which was common among non-smokers, was mostly treated with chemo-radiotherapy (python Figure 3). Chemo-radiotherapy and only radiotherapy were both common to treat cancer in the oropharynx (python Figure 3). Since, experts decide how to treat a patient based on how quickly a cancer is spreading ***[@noauthor_cancer_2021]***,  we can conclude that cancer in the Larynx does not spread very quickly since typically only radiotherapy is used to treat the cancer. Since this is a common site among smokers, it is possible that if smoking is the cause of cancer, the cancer remains isolated. Since cancer in the nasopharynx was mostly treated with chemo-radiotherapy, the cancer there most likely spreads quickly. Treatment for cancer in the oropharynx, seemed to be dependent on each case since chemoradiotherapy and radiotherapy alone were both very commonly used. Further study could be done to check if smoking and HPV status had influence over the decision to use chemoradiotherapy or only radiotherapy as treatment for cancer in the oropharynx. 
+
+Our analysis indicated that treatment type had influence over the likeliness of the survival rate of the patient. Fewer patients who were treated with chemoradiotherapy passed away than patients who were not treated with chemoradiotherapy (Tableau Figure 1). However, there are many causes of death, so we are making the assumption that Oropharyngeal cancer is the cause of death when we draw this conclusion. An alternative method to looking into the success of treatment is if there was a relapse. In general, both local and regional relapses were not very common, but local relapse was more common than regional relapse (python Figures 5 and 6). Local relapse was also more common with only radiotherapy as a treatment (python Figure 5). However, these conclusions are based on the assumption that no data for the patient indicates that they have not relapsed. Patients who have passed away were removed from the data set for this analysis. It is also possible that a patient relapsed after the last patient check in, so it would not have been recorded. Treatments appear to be successful for patients who survived the cancer, and chemo-radiotherapy seems to improve these chances. 
+
+Oropharyngeal cancer has several causes including HPV and smoking. These causes can influence where the cancer occurs. Cancer in the oropharynx seems to be caused by HPV and/or smoking, cancer in the larynx seems to be caused by smoking, and cancer in the nasopharynx seems to be caused by other reasons. Radiotherapy and chemo-radiotherapy are the two most common treatments to treat Oropharyngeal cancer. Cancer in the larynx is mostly treated with radiotherapy, cancer in the nasopharynx is mostly treated with chemo-radiotherapy, and cancer in the oropharynx is treated with both. Less patients died and relapsed when chemo-radiotherapy was used to treat the Oropharyngeal cancer. However, the majority of patients who survived treatment, did not relapse by the time the study was concluded. It is important to identify these trends and biases within the dataset, as it can help improve the chances of survival and help identify treatment types for future patients who develop Oropharyngeal cancer. 
+
+## Citations:
