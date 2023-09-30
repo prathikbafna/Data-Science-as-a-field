@@ -1,0 +1,205 @@
+---
+title: "Final Report"
+date: today
+format: 
+    pdf:
+        documentclass: article
+        mainfont: Times
+        toc: true
+        fontsize: 12px
+        cite-method: biblatex
+        keep-tex: true
+        highlight-style: github
+execute:
+    echo: true
+jupyter: python3               
+---
+<br>
+
+#### **Authors**
+
+* Prathik Bharath Jain
+* Bridget Litostansky 
+* Stephanie Sarette
+* Akarsh Reddy Tatimakula
+* Md Razeenuddin Mehdi
+* Alex Garofalo
+
+## Introduction
+
+According to the American Cancer Society, *“Oropharyngeal cancer is a relatively rare cancer about 53,000 people in the United States develop this cancer each year.”* ***(Cleveland Clinic)*** 
+
+The oropharynx is in the midsection of the throat and along with the nasopharynx and hypopharynx they make up the pharynx section of the throat. 
+
+According to the National Cancer Institute 
+(NCI), the most common risk factors for developing this type of cancer is smoking cigarettes for more than 10 packs a year, being infected with HPV especially HPV-16, and a personal history of head and neck cancer. ***(National Cancer Institute)***
+
+## Questions of Interest
+
+Some questions that interested the team as a whole were as follows.
+
+* Is there a primary cancer site that is more common with smokers than with non-smokers?</li>
+* How likely is it that the cancer contains HPV cells? What treatments are most common among patients with HPV cells? Does treatment take longer for patients with HPV cells than without HPV cells? Does the presence of HPV cells influence how successful treatment is?</li>
+* What is the survival rate for oropharyngeal cancer? Does gender, age, smoking, treatment type, tumor size and HPV cells influence chances of survival?</li>
+* Is there a relationship between ECOG PS and the stage of the cancer? How is this influenced by the presence of HPV cells and the size of the tumor?
+* What treatment is most commonly used for smokers? Is this treatment more successful if a patient does not currently smoke? Are patients who do smoke more likely to relapse?
+* Is there a higher chance of relapse if chemo is used in the treatment?
+* If a person was diagnosed prior to 2005, did they relapse/have cancer spread more than those who were diagnosed after 2005?
+
+Once the question list was identified, it was broken down into two different visualization sections, one done by Python and one done by Tableau.
+<br>  
+
+## Setup:
+
+We will start importing some libraries such as pandas and matplotlib for data visualization.
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+```
+
+
+## About the Dataset: 
+
+
+The dataset chosen for this project comes from the Cancer Imaging Archives website. The dataset is comprised of clinically collected radiation therapy treatment results. It is comprised of 3,346 patients and used 3 different CT scan brand manufacturers to conduct the imaging for these tests. The median patient age for the study is 63 years and is comprised of 80% males and 20% females. 
+
+Some possible sources of bias found while cleaning the data set was due to the large population of men in the data set. The conclusions that could be drawn may or may not apply to women, as medical treatments affect genders differently. As such, the conclusions drawn have been from the perspective of males. Another source of bias found is the field for how many packs smoked per year was a best guess field, which a person may or may not have been truthful when answering.
+
+Here's a glimpse of the data before data cleaning and manipulation process. The same has been uploaded to the github.
+
+We have added both the original dataset url and the url for the dataset after the data cleaning step.
+
+```{python}
+orginal_data_url = 'https://github.com/prathikbafna/Data-Science-as-a-field/blob/main/data.xlsx'
+cleaned_data_url = 'https://github.com/prathikbafna/Data-Science-as-a-field/blob/main/dtsc_data.xlsx'
+```
+
+Now we are importing the dataset from our local machine.
+
+
+```{python}
+path = '/data/data.xlsx'
+
+df = pd.read_excel(path)
+df.head()
+```
+
+## Data Cleaning
+
+We can see that all the column names are not meaningful and have spaces in between.
+
+```{python}
+df.columns
+```
+
+We will now be renaming the columns to aid the process of manipulating data.
+
+```{python}
+df = df.rename(columns = {'T': 'tumor_size', "Smoking PY": "annual_packs_smoked", "Path": "diagnosis_type", "Ds Site": "cancer_site", "Subsite": "cancer_subsite", "Metastasis Status": "metastasis_status", "Tx Modality": "treatment_type", "RT Tech": "radio_therapy_type", "RT Start": "radio_therapy_startDt","Last FU": "last_follow_up", "Date of Death": "date_of_death", "Cause of Death": "cause_of_death", "Smoking Status": "smoking_status", "2nd Ca": "2nd_cancer_site"})
+```
+
+Now lets assess the null values in the dataset
+
+```{python}
+print(df.shape)
+print(df.isnull().sum())
+```
+
+Now we try to fix the null values
+
+```{python}
+df['smoking_status'].value_counts()
+```
+
+**Assumption 1:** *Since there is only one non-drinker mentioned explicitly in the dataset, we are assuming that the rest of the patients did drink.*
+
+Moreover, as there is only a sole non-drinker among a group of around 4000 patients. We can drop this value since it is almost negligible.
+
+```{python}
+df = df[df['smoking_status'] != 'non-drinker']
+```
+
+**Assumption 2:** *We are assuming that the NA values in the HPV columns are patients who didn't get tested. Hence we choose to replace them with 'Not tested'*
+
+```{python}
+df['HPV'].fillna('No', inplace = True)
+```
+
+Now we assess the columns with different types of tumor
+
+```{python}
+df['M '].value_counts()
+```
+
+Percentage of people with M0 (Benign Tumor)
+
+
+```{python}
+p = (3327/3331)*100
+print(p)
+```
+
+We can see that 99.8% of the data is about M0 (Benign Tumor). Hence, we can drop the rows that has MX and M1 and remove the entire column and add in the data description that everybody has M0 (Benign Tumor)
+
+```{python}
+df.drop('M ', axis = 1, inplace = True)
+```
+
+Currently the number of packs smoked is 'NA' for people with smoking status 'Unknown'. 
+
+So we choose to replace them with 0.
+
+There are 5 such values in the dataset.
+
+```{python}
+df['annual_packs_smoked'].fillna(0, inplace = True)
+df['cancer_subsite'].fillna('Unknown', inplace = True)
+```
+
+We have two columns:
+
+* **"Dead":** *Saves the status if the patient is alive or not.*
+* **"date_of_death":** *Stores the date when the patient passed away.*
+
+We now choose to combine these two columns as an alive person's 'date_of_death' will be null
+
+```{python}
+for i in df.index:
+    if(df["Status"][i] == "Dead"):
+        df["Status"][i] == df["date_of_death"][i]
+```
+
+**Assumption 3:** *We are assuming that patients with NA values in the column "cause_of_death" are still alive.*
+
+```{python}
+df['cause_of_death'].fillna('Alive', inplace = True)
+```
+
+Now we replace the null values in the 'Local', 'Regional', and '2nd_cancer_site' columns with 'No'. As we would further require them in our data visualization stage.
+
+```{python}
+df['Local'].fillna('No', inplace = True)
+df['Regional'].fillna('No', inplace = True)
+df['2nd_cancer_site'].fillna('No', inplace = True)
+
+df.isnull().sum()
+```
+
+We have around3346 rows, and in few columns more than 80% of the data is empty.
+
+Hence, we choose to drop those columns in order to further clean the dataset.
+
+```{python}
+df.drop(columns = ['Date Local', 'Date Regional', 'Distant', 'Date Distant', 'Date 2nd Ca', 'Chemo? ', 'RADCURE-challenge'])
+
+```
+## Citation:
+
+
+* Professional, Cleveland Clinic medical. *“Oropharyngeal Cancer: Symptoms, Stages & 
+Prognosis.”* Cleveland Clinic, my.clevelandclinic.org/health/diseases/12180-
+oropharyngeal-cancer. ***Accessed 24 Sept. 2023***
+
+* *“Oropharyngeal Cancer Treatment.”* National Cancer Institute. *"www.cancer.gov/types/head-and-
+neck/patient/adult/oropharyngeal-treatment-pdq#:~:text=Oropharyngeal%20cancer%20is%20a%20disease,neck%20and%20a%20sore%20throat."* ***Accessed 24 Sept. 2023.*** 
