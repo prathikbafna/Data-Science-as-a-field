@@ -40,14 +40,10 @@ According to the National Cancer Institute (NCI), the most common risk factors f
 
 Some questions that interested the team as a whole were as follows.
 
-* Is there a primary cancer site that is more common with smokers than with non-smokers?</li>
-* How likely is it that the cancer contains HPV cells? What treatments are most common among patients with HPV cells? Does treatment take longer for patients with HPV cells than without HPV cells? Does the presence of HPV cells influence how successful treatment is?</li>
-* What is the survival rate for oropharyngeal cancer? Does gender, age, smoking, treatment type, tumor size and HPV cells influence chances of survival?</li>
-* Is there a relationship between ECOG PS and the stage of the cancer? How is this influenced by the presence of HPV cells and the size of the tumor?
-* What treatment is most commonly used for smokers? Is this treatment more successful if a patient does not currently smoke? Are patients who do smoke more likely to relapse?
-* Is there a higher chance of relapse if chemo is used in the treatment?
-* If a person was diagnosed prior to 2005, did they relapse/have cancer spread more than those who were diagnosed after 2005? ***[@noauthor_recurrent_2016]***
-
+* Is there a primary cancer site that is more common with smokers than non-smokers? What about with patients who do and do not have HPV?</li>
+* Does HPV, smoking status, and cancer sites hold influence over what treatment type is used to fight the cancer?</li>
+* How successful are the treatment types?</li>
+* <strong>Overall question: How does smoking status and HPV affect Oropharyngeal cancer patients?</strong></li>
 Once the question list was identified, it was broken down into two different visualization sections, one done by Python and one done by Tableau.
 <br>  
 
@@ -83,9 +79,9 @@ Now we are importing the dataset from our local machine.
 
 
 ```{python}
-path = '/data/data.xlsx'
+path = './data.xlsx'
 
-df = pd.read_excel('./data/data.xlsx')
+df = pd.read_excel(path)
 df.head()
 ```
 
@@ -400,7 +396,7 @@ In the first visualization we analyze the status of the patients who went throug
 
 We also assess how many people went through chemotherapy as it is a rather dificult decision to make.
 
-![Chemotherapy vs Status](./images/chemo.jpeg)
+![Chemotherapy vs Status](./images/chemo.png)
 
 
 
@@ -408,18 +404,11 @@ We also assess how many people went through chemotherapy as it is a rather dific
 
 In Figure 2 we analyze the last follow up date of patients who engaged in smoking.
 
-![Smoking Status vs Last Follow Up Date](./images/smoking-follow.jpeg)
-
+![Smoking Status vs Last Follow Up Date](./images/smoking-follow.png)
 
 ##### Figure 3:
 
-Figure 3 shows a heatmap and the relation between age of the patients, diagnosis type, the dosage they are administered on, and the cancer substitute.
-
-![Heatmap of Diagnosis Type and Dosage](./images/diagnosis.jpeg)
-
-##### Figure 4:
-
-In Figure 4 we analyze what sort of treatments did the patient receive and their smoking status. We visualize this data in a tabular format.
+In Figure 3 we analyze what sort of treatments did the patient receive and their smoking status. We visualize this data in a tabular format.
 
 ![Treatment Type vs Smoking Status](./images/smoking-treatment.png)
 
@@ -432,7 +421,7 @@ The second Tableau visualization shows that among the female patients, more of t
 
 From the above analysis, we can conclude that the most common site for Oropharyngeal cancer is the oropharynx (python Figure 1). This is particularly common for patients who are current smokers or ex-smokers (python Figure 1). This was also a very common site for patients who tested for HPV (python Figure 2). It did not matter if the test result was positive or negative, the oropharynx was the dominant cancer site for both results. HPV affects the throat and mouth, and is the cause of up to 70% of Oropharyngeal cancer cases ***[@noauthor_hpv_2023]***, so it is not surprising that patients with cancer in the oropharynx would be tested for HPV. Further analysis could be done for patients with cancer in the oropharynx to compare HPV status and their smoking status. The larynx was the second most common site for Oropharyngeal cancer (python Figure 1). This was also a common site for patients who have smoked in their life (python Figure 1) and it was the most common site for patients not tested for HPV (python Figure 2), indicating that this cancer site is most likely to occur because of smoking status. The third most common site was the nasopharynx, which was more common among patients who have never smoked (python Figure 1). This was also not a very common site for patients with HPV (python Figure 2). Since this site was common among patients who did not smoke and did not have HPV, the cause of the cancer here could be genetic. The common causes of Oropharyngeal cancer have influence over the cancer site. 
 
-The distribution of treatment types revealed that radiotherapy and chemo-radiotherapy were the two most utilized treatment types for Oropharyngeal cancer, with radiation therapy alone being the most common treatment type (python Figure 3). Two of the three most common cancer sites had a more common treatment type. The Larynx, which was common among smokers, was mostly treated with only radiotherapy, while the Nasopharynx, which was common among non-smokers, was mostly treated with chemo-radiotherapy (python Figure 3). Chemo-radiotherapy and only radiotherapy were both common to treat cancer in the oropharynx (python Figure 3). Since, experts decide how to treat a patient based on how quickly a cancer is spreading ***[@noauthor_cancer_2021]***,  we can conclude that cancer in the Larynx does not spread very quickly since typically only radiotherapy is used to treat the cancer. Since this is a common site among smokers, it is possible that if smoking is the cause of cancer, the cancer remains isolated. Since cancer in the nasopharynx was mostly treated with chemo-radiotherapy, the cancer there most likely spreads quickly. Treatment for cancer in the oropharynx, seemed to be dependent on each case since chemoradiotherapy and radiotherapy alone were both very commonly used. Further study could be done to check if smoking and HPV status had influence over the decision to use chemoradiotherapy or only radiotherapy as treatment for cancer in the oropharynx. 
+The distribution of treatment types revealed that radiotherapy and chemo-radiotherapy were the two most utilized treatment types for Oropharyngeal cancer, with radiation therapy alone being the most common treatment type (python Figure 3). Two of the three most common cancer sites had a more common treatment type. The Larynx, which was common among smokers, was mostly treated with only radiotherapy, while the Nasopharynx, which was common among non-smokers, was mostly treated with chemo-radiotherapy (python Figure 3). Chemo-radiotherapy and only radiotherapy were both common to treat cancer in the oropharynx (python Figure 3). Since, experts decide how to treat a patient based on how quickly a cancer is spreading ***[@noauthor_cancer_2021]***,  we can conclude that cancer in the Larynx does not spread very quickly since typically only radiotherapy is used to treat the cancer. Since this is a common site among smokers, it is possible that if smoking is the cause of cancer, the cancer remains isolated. We also observed that for men and women, smokers and ex-smokers were treated by RT alone more than non-smokers (Tableau Figure 3). ChemoRT was used a lot more to treat non-smokers than smokers and ex-smokers (Tableau Figure 3). Since cancer in the nasopharynx was mostly treated with chemo-radiotherapy, the cancer there most likely spreads quickly. Treatment for cancer in the oropharynx, seemed to be dependent on each case since chemoradiotherapy and radiotherapy alone were both very commonly used. Further study could be done to check if smoking and HPV status had influence over the decision to use chemoradiotherapy or only radiotherapy as treatment for cancer in the oropharynx. 
 
 Our analysis indicated that treatment type had influence over the likeliness of the survival rate of the patient. Fewer patients who were treated with chemoradiotherapy passed away than patients who were not treated with chemoradiotherapy (Tableau Figure 1). However, there are many causes of death, so we are making the assumption that Oropharyngeal cancer is the cause of death when we draw this conclusion. An alternative method to looking into the success of treatment is if there was a relapse. In general, both local and regional relapses were not very common, but local relapse was more common than regional relapse (python Figures 5 and 6). Local relapse was also more common with only radiotherapy as a treatment (python Figure 5). However, these conclusions are based on the assumption that no data for the patient indicates that they have not relapsed. Patients who have passed away were removed from the data set for this analysis. It is also possible that a patient relapsed after the last patient check in, so it would not have been recorded. Treatments appear to be successful for patients who survived the cancer, and chemo-radiotherapy seems to improve these chances. 
 
